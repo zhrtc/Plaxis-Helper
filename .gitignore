@@ -1,0 +1,9 @@
+**/__pycache__
+venv/Include
+venv/Lib/site-packages/*
+!venv/Lib/site-packages/Crypto
+!venv/Lib/site-packages/plxscripting
+!venv/Lib/site-packages/encryption.py
+venv/Scripts
+venv/*.*
+!venv/requirements.txt
