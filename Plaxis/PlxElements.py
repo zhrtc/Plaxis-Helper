@@ -112,10 +112,10 @@ class PlxAnchor(PlxElement):
     def UpdateMaxForce(self, phaseName:str, *args) -> None:
         for item in args:
             if isinstance(item, float) or isinstance(item, int):
-                if item <= 0 and (self.MaxCompression == None or item < self.MaxCompression):
+                if item <= 0 and (self.MaxCompression is None or item < self.MaxCompression):
                     self.MaxCompression = item
                     self.MaxCompressionPhaseName = phaseName
-                if item >= 0 and (self.MaxTension == None or item > self.MaxTension):
+                if item >= 0 and (self.MaxTension is None or item > self.MaxTension):
                     self.MaxTension = item
                     self.MaxTensionPhaseName = phaseName
 
@@ -126,14 +126,14 @@ class PlxAnchor(PlxElement):
         elif localID == 2:
             self.X2 = X
             self.Y2 = Y
-        if self.Length == None and self.X1 != None and self.X2 != None and self.Y1 != None and self.Y2 != None:
+        if self.Length is None and self.X1 != None and self.X2 != None and self.Y1 != None and self.Y2 != None:
             self.Length = math.sqrt((self.X1 - self.X2)*(self.X1 - self.X2) + (self.Y2 - self.Y2)*(self.Y2 - self.Y2))
 
     def UpdateAxialForces(self, phaseName:str, force:float) -> None:
         self.Forces[phaseName] = force
 
     def __str__(self) -> str:
-        if self.Y2 == None or abs(self.Y1 - self.Y2) < 1e-4:
+        if self.Y2 is None or abs(self.Y1 - self.Y2) < 1e-4:
             level = f"{self.Y1:+7.2f}"
         else:
             level = f"{self.Y1:+7.2f}~{self.Y2:+7.2f}"
@@ -145,7 +145,7 @@ class PlxAnchor(PlxElement):
 
     def ToList(self) -> List[Any]:
         return [self.Name,
-                self.Y1 if self.Y2 == None or abs(self.Y1 - self.Y2) < 1e-4 else f"{self.Y1:+7.2f}~{self.Y2:+7.2f}",
+                self.Y1 if self.Y2 is None or abs(self.Y1 - self.Y2) < 1e-4 else f"{self.Y1:+7.2f}~{self.Y2:+7.2f}",
                 round(self.Length, 3),
                 round(self.Spacing, 3),
                 round(abs(self.MaxCompression), 3),
@@ -153,7 +153,6 @@ class PlxAnchor(PlxElement):
                 self.MaterialName,
                 f"{GV.PlxPhases[self.MaxCompressionPhaseName].PhaseID} [{self.MaxCompressionPhaseName}]",
                 f"{GV.PlxPhases[self.PrestressPhaseName].PhaseID} [{self.PrestressPhaseName}]" if self.PrestressForce != None else ""]
-
 
     @staticmethod
     def LevelCompare(x):
@@ -183,6 +182,11 @@ class PlxPlate(PlxElement):
 class GV():
     """Gloabal Variables"""
 
+    SeverInput = None
+    SeverOutput = None
+    PlxInput = None
+    PlxOutput = None
+
     PlxPhases:Dict[str, PlxPhase] = {}
     PlxPhasesList:List[PlxPhase] = []
 
@@ -190,11 +194,6 @@ class GV():
     PlxInterfaces:Dict[str, str] = {}
     PlxFixedAnchors:Dict[str, PlxAnchor] = {}
     PlxNtNAnchors:Dict[str, PlxAnchor] = {}
-
-    SeverInput = None
-    SeverOutput = None
-    PlxInput = None
-    PlxOutput = None
 
     SoilMats:Dict[int, PlxSoilMaterial] = {}
     PlateMats:Dict[int, PlxPlateMaterial] = {}
@@ -204,21 +203,21 @@ class GV():
 
     @classmethod
     def Reset(cls):
-        cls.PlxPhases = {}
-        cls.PlxPhasesList = []
-
-        cls.PlxPlates = {}
-        cls.PlxInterfaces = {}
-        cls.PlxFixedAnchors = {}
-        cls.PlxNtNAnchors = {}
-
         cls.SeverInput = None
         cls.SeverOutput = None
         cls.PlxInput = None
         cls.PlxOutput = None
 
-        cls.SoilMats = {}
-        cls.PlateMats = {}
-        cls.AnchorMatsByID = {}
-        cls.AnchorMatsByName = {}
-        cls.EmbeddedBeamMats = {}
+        cls.PlxPhases.clear()
+        cls.PlxPhasesList.clear()
+
+        cls.PlxPlates.clear()
+        cls.PlxInterfaces.clear()
+        cls.PlxFixedAnchors.clear()
+        cls.PlxNtNAnchors.clear()
+
+        cls.SoilMats.clear()
+        cls.PlateMats.clear()
+        cls.AnchorMatsByID.clear()
+        cls.AnchorMatsByName.clear()
+        cls.EmbeddedBeamMats.clear()

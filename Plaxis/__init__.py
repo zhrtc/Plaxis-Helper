@@ -5,11 +5,10 @@ from .PlxElements import *
 from .PlaxisOutput import *
 import logging
 
-
 FORMAT = '%(asctime)s %(message)s'
 logging.basicConfig(format=FORMAT)
 
-def Initialize(serverConfig:ServerConfig = ServerConfig()):
+def Initialize(serverConfig:ServerConfig = ServerConfig(), initAnchors:bool = True, initPlates:bool = False):
     GV.Reset()
     logger = logging.getLogger("InitPlaxis")
     logger.setLevel(logging.INFO)
@@ -59,29 +58,31 @@ def Initialize(serverConfig:ServerConfig = ServerConfig()):
         elif matType == "EmbeddedBeam2DMat":
             GV.EmbeddedBeamMats[mat.MaterialNumber.value] = PlxEmbeddedBeamMaterial(mat)
 
-    logger.info("Enumerate FixedEndAnchors...")
-    for i, item in enumerate(PlxInput.FixedEndAnchors):
-        GV.PlxFixedAnchors[i+1] = PlxAnchor(item)
-        logger.info(f"    {GV.PlxFixedAnchors[i+1].Name}")
-        tmpMaterialName = item.Material[GV.PlxPhases["InitialPhase"].PlxObject].Name.value
-        GV.PlxFixedAnchors[i+1].Material = GV.AnchorMatsByName[tmpMaterialName]
-        GV.PlxFixedAnchors[i+1].MaterialName = GV.PlxFixedAnchors[i+1].Material.MaterialName
-        GV.PlxFixedAnchors[i+1].Spacing = GV.PlxFixedAnchors[i+1].Material.Spacing
-        GV.PlxFixedAnchors[i+1].Length = item.EquivalentLength[GV.PlxPhases["InitialPhase"].PlxObject].value
+    if initAnchors:
+        logger.info("Enumerate FixedEndAnchors...")
+        for i, item in enumerate(PlxInput.FixedEndAnchors):
+            GV.PlxFixedAnchors[i+1] = PlxAnchor(item)
+            logger.info(f"    {GV.PlxFixedAnchors[i+1].Name}")
+            tmpMaterialName = item.Material[GV.PlxPhases["InitialPhase"].PlxObject].Name.value
+            GV.PlxFixedAnchors[i+1].Material = GV.AnchorMatsByName[tmpMaterialName]
+            GV.PlxFixedAnchors[i+1].MaterialName = GV.PlxFixedAnchors[i+1].Material.MaterialName
+            GV.PlxFixedAnchors[i+1].Spacing = GV.PlxFixedAnchors[i+1].Material.Spacing
+            GV.PlxFixedAnchors[i+1].Length = item.EquivalentLength[GV.PlxPhases["InitialPhase"].PlxObject].value
 
-    logger.info("Enumerate NodeToNodeAnchors...")
-    for i, item in enumerate(PlxInput.NodeToNodeAnchors):
-        GV.PlxNtNAnchors[i+1] = PlxAnchor(item)
-        logger.info(f"    {GV.PlxNtNAnchors[i+1].Name}")
-        tmpMaterialName = item.Material[GV.PlxPhases["InitialPhase"].PlxObject].Name.value
-        GV.PlxNtNAnchors[i+1].Material = GV.AnchorMatsByName[tmpMaterialName]
-        GV.PlxNtNAnchors[i+1].MaterialName = GV.PlxNtNAnchors[i+1].Material.MaterialName
-        GV.PlxNtNAnchors[i+1].Spacing = GV.PlxNtNAnchors[i+1].Material.Spacing
+        logger.info("Enumerate NodeToNodeAnchors...")
+        for i, item in enumerate(PlxInput.NodeToNodeAnchors):
+            GV.PlxNtNAnchors[i+1] = PlxAnchor(item)
+            logger.info(f"    {GV.PlxNtNAnchors[i+1].Name}")
+            tmpMaterialName = item.Material[GV.PlxPhases["InitialPhase"].PlxObject].Name.value
+            GV.PlxNtNAnchors[i+1].Material = GV.AnchorMatsByName[tmpMaterialName]
+            GV.PlxNtNAnchors[i+1].MaterialName = GV.PlxNtNAnchors[i+1].Material.MaterialName
+            GV.PlxNtNAnchors[i+1].Spacing = GV.PlxNtNAnchors[i+1].Material.Spacing
 
-    # logger.info("Enumerate Plates...")
-    # for i, item in enumerate(PlxInput.Plates):
-    #     GV.PlxPlates[i+1] = PlxPlate(item)
-    #     logger.info(f"    {GV.PlxPlates[i+1].Name}")
-    #     GV.PlxPlates[i+1].MaterialName = item.Material[GV.PlxPhases["InitialPhase"].PlxObject].Name.value
+    if initPlates:
+        logger.info("Enumerate Plates...")
+        for i, item in enumerate(PlxInput.Plates):
+            GV.PlxPlates[i+1] = PlxPlate(item)
+            logger.info(f"    {GV.PlxPlates[i+1].Name}")
+            GV.PlxPlates[i+1].MaterialName = item.Material[GV.PlxPhases["InitialPhase"].PlxObject].Name.value
 
     logger.info("Initialization Finished.")

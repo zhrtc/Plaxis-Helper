@@ -1,46 +1,14 @@
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QRect, Qt, QTimer, Slot)
-from PySide6.QtWidgets import (QAbstractItemView, QApplication, QDialog,
-    QDialogButtonBox, QListWidget, QMessageBox)
+from PySide6 import QtWidgets
+from PySide6.QtCore import (QRect, Qt, QTimer, Slot)
+from PySide6.QtWidgets import (QAbstractItemView, QDialog, QDialogButtonBox, QListWidget, QMessageBox)
 from typing import List
 
 app = None
 
-def InitQt():
-    global app
-    if app is None:
-        try:
-            app = QApplication([])
-        except:
-            pass
-
-class Ui_PhasesSelectDialog(object):
-    def setupUi(self, PhasesSelectDialog):
-        if not PhasesSelectDialog.objectName():
-            PhasesSelectDialog.setObjectName(u"PhasesSelectDialog")
-        PhasesSelectDialog.setWindowModality(Qt.WindowModal)
-        PhasesSelectDialog.setFixedSize(400, 647)
-        PhasesSelectDialog.setModal(True)
-        self.PhasesList = QListWidget(PhasesSelectDialog)
-        self.PhasesList.setObjectName(u"PhasesList")
-        self.PhasesList.setGeometry(QRect(20, 20, 361, 581))
-        self.PhasesList.setSelectionMode(QAbstractItemView.MultiSelection)
-        PhasesSelectDialog.PhasesList = self.PhasesList
-        self.OKCancelbtn = QDialogButtonBox(PhasesSelectDialog)
-        self.OKCancelbtn.setObjectName(u"OKCancelbtn")
-        self.OKCancelbtn.setGeometry(QRect(110, 610, 156, 24))
-        self.OKCancelbtn.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
-        self.OKCancelbtn.setCenterButtons(False)
-        PhasesSelectDialog.OKCancelBtn = self.OKCancelbtn
-
-        self.retranslateUi(PhasesSelectDialog)
-
-        QMetaObject.connectSlotsByName(PhasesSelectDialog)
-    # setupUi
-
-    def retranslateUi(self, PhasesSelectDialog):
-        PhasesSelectDialog.setWindowTitle(QCoreApplication.translate("PhasesSelectDialog", u"Dialog", None))
-    # retranslateUi
+if not QtWidgets.QApplication.instance():
+    app = QtWidgets.QApplication([])
+else:
+    app = QtWidgets.QApplication.instance()
 
 class PhasesSelectDialog(QDialog):
     PhasesList:QListWidget = None
@@ -54,8 +22,21 @@ class PhasesSelectDialog(QDialog):
 
     def __init__(self, phasesList:List[str], selectedItemIndices:List[int], title:str = "Please Select {} Phases", timeout:int = 5) -> None:
         super().__init__()
-        self.ui = Ui_PhasesSelectDialog()
-        self.ui.setupUi(self)
+
+        if not self.objectName():
+            self.setObjectName(u"PhasesSelectDialog")
+        self.setWindowModality(Qt.WindowModal)
+        self.setFixedSize(400, 647)
+        self.setModal(True)
+        self.PhasesList = QListWidget(self)
+        self.PhasesList.setObjectName(u"PhasesList")
+        self.PhasesList.setGeometry(QRect(20, 20, 361, 581))
+        self.PhasesList.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.OKCancelBtn = QDialogButtonBox(self)
+        self.OKCancelBtn.setObjectName(u"OKCancelBtn")
+        self.OKCancelBtn.setGeometry(QRect(110, 610, 156, 24))
+        self.OKCancelBtn.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
+        self.OKCancelBtn.setCenterButtons(False)
 
         #Process PhasesList
         self.PhasesList.addItems(phasesList)
@@ -65,10 +46,11 @@ class PhasesSelectDialog(QDialog):
             self.PhasesList.item(itemIndex).setSelected(True)
         self.PhasesList.itemSelectionChanged.connect(self.PhasesList_Change)
 
-        self.Timeout = timeout * 1000
+        self.Timeout = timeout
         self.timer = QTimer(self)
-        self.timer.setInterval(100)
+        self.timer.setInterval(1000)
         self.timer.timeout.connect(self.Timer_OnTime)
+        self.Timer_OnTime()
         self.timer.start()
 
         self.Title = title.format(self.RequiredSelectedItemNos)
@@ -89,10 +71,10 @@ class PhasesSelectDialog(QDialog):
 
     @Slot()
     def Timer_OnTime(self):
-        self.setWindowTitle(self.Title + " : Timeout in {:d} second...".format(int(self.Timeout/1000)))
+        self.setWindowTitle(self.Title + " : Timeout in {:d} second...".format(self.Timeout))
         if self.Timeout < 0:
             self.accept()
-        self.Timeout -= 100
+        self.Timeout -= 1
 
     @Slot(int)
     def Dialog_Close(self, result):

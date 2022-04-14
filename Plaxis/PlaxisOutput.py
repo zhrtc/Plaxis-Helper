@@ -1,9 +1,10 @@
 from .PlxElements import *
 from typing import List, Any
 from plxscripting.plx_scripting_exceptions import PlxScriptingError
-from .PhasesSelectDialog import InitQt, PhasesSelectDialog
+from .PhasesSelectDialog import PhasesSelectDialog
 
 def GenerateAnchorOutput() -> List[Any]:
+    print("\nStart Output\nExtracting Resuts...")
     PlxOutput = GV.PlxOutput
     timeout = 5
 
@@ -16,7 +17,6 @@ def GenerateAnchorOutput() -> List[Any]:
         if tmpName.find("final") >= 0 or tmpName.find("fel") >= 0:
             startPhase = i
     selectedPlxPhaseList:List[PlxPhase] = []
-    InitQt()
     phasesSelectDialog = PhasesSelectDialog(phaseNameList, [startPhase, endPhase], timeout = timeout)
     while 1:
         try:
@@ -64,7 +64,13 @@ def GenerateAnchorOutput() -> List[Any]:
                     anchor.Mark = i + 1
                 print("    {} (Element ID {}): Force {:.2f}: Max C {:.2f} at {}; Max T {:.2f} at {}".format(anchor.Name, eleId, f,
                     anchor.MaxCompression, anchor.MaxCompressionPhaseName, anchor.MaxTension, anchor.MaxTensionPhaseName))
+        except PlxScriptingError as ex:
+            if str(ex).find("The command did not deliver any results") >= 0:
+                print("\033[33m{}\033[0m".format('    ' + str(ex).replace('\n', '\n        ')))
+            else:
+                raise
 
+        try:
             Fs = PlxOutput.getresults(plxPhase.PlxObject, PlxOutput.ResultTypes.NodeToNodeAnchor.AnchorForce2D, 'node') 
             Xs = PlxOutput.getresults(plxPhase.PlxObject, PlxOutput.ResultTypes.NodeToNodeAnchor.X, 'node') 
             Ys = PlxOutput.getresults(plxPhase.PlxObject, PlxOutput.ResultTypes.NodeToNodeAnchor.Y, 'node') 
