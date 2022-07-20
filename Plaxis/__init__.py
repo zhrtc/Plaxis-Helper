@@ -18,9 +18,11 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), initAnchors:bool = Tr
         logger.info("Connect to Plaxis Input")
         GV.SeverInput, GV.PlxInput = new_server(serverConfig.Host, serverConfig.InputPort, password=serverConfig.InputPassword, request_timeout=serverConfig.RequestTimeout)
         logger.info("Connect to Plaxis Input Succeed!")
-    except:
+    except Exception as ex:
         logger.warning("Connect to Plaxis Input Failed!")
+        logger.warning(ex)
         GV.SeverInput, GV.PlxInput = None, None
+        exit()
 
     try:
         logger.info("Connect to Plaxis Output")
@@ -28,7 +30,9 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), initAnchors:bool = Tr
         logger.info("Connect to Plaxis Output Succeed!")
     except:
         logger.warning("Connect to Plaxis Output Failed!")
+        logger.warning(ex)
         GV.SeverOutput, GV.PlxOutput = None, None
+        exit()
 
     PlxInput = GV.PlxInput
     PlxInput.gotostages()

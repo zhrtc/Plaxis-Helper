@@ -69,6 +69,10 @@ def GenerateAnchorOutput() -> List[Any]:
                 print("\033[33m{}\033[0m".format('    ' + str(ex).replace('\n', '\n        ')))
             else:
                 raise
+        except Exception as ex:
+            print(ex)
+        except:
+            print("error")
 
         try:
             Fs = PlxOutput.getresults(plxPhase.PlxObject, PlxOutput.ResultTypes.NodeToNodeAnchor.AnchorForce2D, 'node') 
