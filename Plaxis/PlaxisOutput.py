@@ -65,14 +65,10 @@ def GenerateAnchorOutput() -> List[Any]:
                 print("    {} (Element ID {}): Force {:.2f}: Max C {:.2f} at {}; Max T {:.2f} at {}".format(anchor.Name, eleId, f,
                     anchor.MaxCompression, anchor.MaxCompressionPhaseName, anchor.MaxTension, anchor.MaxTensionPhaseName))
         except PlxScriptingError as ex:
-            if str(ex).find("The command did not deliver any results") >= 0:
+            if str(ex).find("The command did not deliver any results") >= 0 or str(ex).find("No \"Fixed-end anchor\" found") >= 0:
                 print("\033[33m{}\033[0m".format('    ' + str(ex).replace('\n', '\n        ')))
             else:
                 raise
-        except Exception as ex:
-            print(ex)
-        except:
-            print("error")
 
         try:
             Fs = PlxOutput.getresults(plxPhase.PlxObject, PlxOutput.ResultTypes.NodeToNodeAnchor.AnchorForce2D, 'node') 
@@ -107,7 +103,7 @@ def GenerateAnchorOutput() -> List[Any]:
     resultList[0].append("Preload Phase")
     tmpAnchors = list(GV.PlxFixedAnchors.values()) + list(GV.PlxNtNAnchors.values())
     for anchor in sorted(tmpAnchors, key=PlxAnchor.LevelCompare):
-        if anchor.Y1 != None and anchor.Mark == 1:
+        if anchor.Y1 != None and anchor.Mark >= 1:
             resultStr += str(anchor)
             resultList.append(anchor.ToList())
     print(resultStr)
