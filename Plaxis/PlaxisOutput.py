@@ -90,7 +90,7 @@ def GenerateAnchorOutput() -> List[Any]:
                     print("    {} (Element ID {}): Force {:.2f}: Max C {:.2f} at {}; Max T {:.2f} at {}".format(anchor.Name, eleId, f,
                         anchor.MaxCompression, anchor.MaxCompressionPhaseName, anchor.MaxTension, anchor.MaxTensionPhaseName))
         except PlxScriptingError as ex:
-            if str(ex).find("The command did not deliver any results") >= 0:
+            if str(ex).find("The command did not deliver any results") >= 0 or str(ex).find("No \"Fixed-end anchor\" found") >= 0:
                 print("\033[33m{}\033[0m".format('    ' + str(ex).replace('\n', '\n        ')))
             else:
                 raise
