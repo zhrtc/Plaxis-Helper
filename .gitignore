@@ -7,3 +7,4 @@ venv/Lib/site-packages/*
 venv/Scripts
 venv/*.*
 !venv/requirements.txt
+Data
