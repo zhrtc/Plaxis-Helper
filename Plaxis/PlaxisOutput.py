@@ -60,8 +60,8 @@ def GenerateAnchorOutput() -> List[Any]:
                 anchor.UpdateCoordinates(x, y, localN)
                 anchor.UpdateMaxForce(phaseName, minF, maxF)
                 anchor.UpdateAxialForces(phaseName, f)
-                if anchor.Mark == 0:
-                    anchor.Mark = i + 1
+                if anchor.Mark == 0 and i == 0:
+                    anchor.Mark = 1
                 print("    {} (Element ID {}): Force {:.2f}: Max C {:.2f} at {}; Max T {:.2f} at {}".format(anchor.Name, eleId, f,
                     anchor.MaxCompression, anchor.MaxCompressionPhaseName, anchor.MaxTension, anchor.MaxTensionPhaseName))
         except PlxScriptingError as ex:
@@ -85,8 +85,8 @@ def GenerateAnchorOutput() -> List[Any]:
                 if localN == 1:
                     anchor.UpdateMaxForce(phaseName, minF, maxF)
                     anchor.UpdateAxialForces(phaseName, f)
-                    if anchor.Mark == 0:
-                        anchor.Mark = i + 1
+                    if anchor.Mark == 0 and i == 0:
+                        anchor.Mark = 1
                     print("    {} (Element ID {}): Force {:.2f}: Max C {:.2f} at {}; Max T {:.2f} at {}".format(anchor.Name, eleId, f,
                         anchor.MaxCompression, anchor.MaxCompressionPhaseName, anchor.MaxTension, anchor.MaxTensionPhaseName))
         except PlxScriptingError as ex:
@@ -103,7 +103,7 @@ def GenerateAnchorOutput() -> List[Any]:
     resultList[0].append("Preload Phase")
     tmpAnchors = list(GV.PlxFixedAnchors.values()) + list(GV.PlxNtNAnchors.values())
     for anchor in sorted(tmpAnchors, key=PlxAnchor.LevelCompare):
-        if anchor.Y1 != None and anchor.Mark >= 1:
+        if anchor.Y1 != None and anchor.Mark == 1:
             resultStr += str(anchor)
             resultList.append(anchor.ToList())
     print(resultStr)

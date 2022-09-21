@@ -2,13 +2,15 @@ from plxscripting.easy import *
 from .ServerConfig import ServerConfig
 from .CommonFuncs import *
 from .PlxElements import *
-from .PlaxisOutput import *
+#from .PlaxisOutput import *
 import logging
 
 FORMAT = '%(asctime)s %(message)s'
 logging.basicConfig(format=FORMAT)
 
-def Initialize(serverConfig:ServerConfig = ServerConfig(), initAnchors:bool = True, initPlates:bool = False):
+def Initialize(serverConfig:ServerConfig = ServerConfig(), All:bool = False, Anchors:bool = False,
+               Plates:bool = False, Materials:bool = False, Phases:bool = False, GotoStage:bool = False,
+               ConnectOutput:bool = False):
     GV.Reset()
     logger = logging.getLogger("InitPlaxis")
     logger.setLevel(logging.INFO)
@@ -24,45 +26,51 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), initAnchors:bool = Tr
         GV.SeverInput, GV.PlxInput = None, None
         exit()
 
-    try:
-        logger.info("Connect to Plaxis Output")
-        GV.SeverOutput, GV.PlxOutput = new_server(serverConfig.Host, serverConfig.OutputPort, password=serverConfig.OutputPassword, request_timeout=serverConfig.RequestTimeout)
-        logger.info("Connect to Plaxis Output Succeed!")
-    except:
-        logger.warning("Connect to Plaxis Output Failed!")
-        logger.warning(ex)
-        GV.SeverOutput, GV.PlxOutput = None, None
-        exit()
+    if All or ConnectOutput:
+        try:
+            logger.info("Connect to Plaxis Output")
+            GV.SeverOutput, GV.PlxOutput = new_server(serverConfig.Host, serverConfig.OutputPort, password=serverConfig.OutputPassword, request_timeout=serverConfig.RequestTimeout)
+            logger.info("Connect to Plaxis Output Succeed!")
+        except:
+            logger.warning("Connect to Plaxis Output Failed!")
+            logger.warning(ex)
+            GV.SeverOutput, GV.PlxOutput = None, None
+            exit()
 
     PlxInput = GV.PlxInput
-    PlxInput.gotostages()
-    logger.info("Enumerate Phases...")
-    for phase in PlxInput.Phases:
-        obj = PlxPhase(phase)
-        logger.info(f"    {obj.PhaseID} [{obj.Name}]")
-        GV.PlxPhases[obj.Name] = obj
-    for phaseObj in GV.PlxPhases.values():
-        if phaseObj.PreviousPhaseName != None:
-            phaseObj.Previous = GV.PlxPhases[phaseObj.PreviousPhaseName]
-            phaseObj.Previous.Children.append(phaseObj)
-    GV.PlxPhasesList = PreOrderDeepList(GV.PlxPhases['InitialPhase'])
 
-    logger.info("Enumerate Materials...")
-    for mat in PlxInput.Materials:
-        matType = mat.TypeName.value
-        logger.info(f"    {mat.MaterialName.value}")
-        if matType == "SoilMat":
-            GV.SoilMats[mat.MaterialNumber.value] = PlxSoilMaterial(mat)
-        elif matType == "PlateMat2D":
-            GV.PlateMats[mat.MaterialNumber.value] = PlxPlateMaterial(mat)
-        elif matType == "AnchorMat2D":
-            tmp = PlxAnchorMaterial(mat)
-            GV.AnchorMatsByID[mat.MaterialNumber.value] = tmp
-            GV.AnchorMatsByName[tmp.Name] = tmp
-        elif matType == "EmbeddedBeam2DMat":
-            GV.EmbeddedBeamMats[mat.MaterialNumber.value] = PlxEmbeddedBeamMaterial(mat)
+    if All or GotoStage:
+        PlxInput.gotostages()
 
-    if initAnchors:
+    if All or Phases:
+        logger.info("Enumerate Phases...")
+        for phase in PlxInput.Phases:
+            obj = PlxPhase(phase)
+            logger.info(f"    {obj.PhaseID} [{obj.Name}]")
+            GV.PlxPhases[obj.Name] = obj
+        for phaseObj in GV.PlxPhases.values():
+            if phaseObj.PreviousPhaseName != None:
+                phaseObj.Previous = GV.PlxPhases[phaseObj.PreviousPhaseName]
+                phaseObj.Previous.Children.append(phaseObj)
+        GV.PlxPhasesList = PreOrderDeepList(GV.PlxPhases['InitialPhase'])
+
+    if All or Materials:
+        logger.info("Enumerate Materials...")
+        for mat in PlxInput.Materials:
+            matType = mat.TypeName.value
+            logger.info(f"    {mat.MaterialName.value}")
+            if matType == "SoilMat":
+                GV.SoilMats[mat.MaterialNumber.value] = PlxSoilMaterial(mat)
+            elif matType == "PlateMat2D":
+                GV.PlateMats[mat.MaterialNumber.value] = PlxPlateMaterial(mat)
+            elif matType == "AnchorMat2D":
+                tmp = PlxAnchorMaterial(mat)
+                GV.AnchorMatsByID[mat.MaterialNumber.value] = tmp
+                GV.AnchorMatsByName[tmp.Name] = tmp
+            elif matType == "EmbeddedBeam2DMat":
+                GV.EmbeddedBeamMats[mat.MaterialNumber.value] = PlxEmbeddedBeamMaterial(mat)
+
+    if All or Anchors:
         logger.info("Enumerate FixedEndAnchors...")
         for i, item in enumerate(PlxInput.FixedEndAnchors):
             GV.PlxFixedAnchors[i+1] = PlxAnchor(item)
@@ -82,7 +90,7 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), initAnchors:bool = Tr
             GV.PlxNtNAnchors[i+1].MaterialName = GV.PlxNtNAnchors[i+1].Material.MaterialName
             GV.PlxNtNAnchors[i+1].Spacing = GV.PlxNtNAnchors[i+1].Material.Spacing
 
-    if initPlates:
+    if All or Plates:
         logger.info("Enumerate Plates...")
         for i, item in enumerate(PlxInput.Plates):
             GV.PlxPlates[i+1] = PlxPlate(item)

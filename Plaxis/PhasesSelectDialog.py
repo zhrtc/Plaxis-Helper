@@ -60,6 +60,7 @@ class PhasesSelectDialog(QDialog):
         self.OKCancelBtn.rejected.connect(self.Cancel)
 
         self.finished.connect(self.Dialog_Close)
+        self.activateWindow()
 
     @Slot()
     def PhasesList_Change(self):

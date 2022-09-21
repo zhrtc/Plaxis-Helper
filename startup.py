@@ -3,8 +3,9 @@ import xlwings as xw
 from pytimedinput import pytimedinput
 
 def GetPlaxisAnchorForces():
-    Plaxis.Initialize()
-    anchorOutputList = Plaxis.GenerateAnchorOutput()
+    Plaxis.Initialize(All=True)
+    from Plaxis.PlaxisOutput import GenerateAnchorOutput
+    anchorOutputList = GenerateAnchorOutput()
     if anchorOutputList is None or len(anchorOutputList) == 0:
         print("No output data generated!")
     else:
@@ -20,9 +21,16 @@ def GetPlaxisAnchorForces():
             activeCell = targetSheet.book.app.selection
             activeCell.value = anchorOutputList
 
+def SetSoilPermeability():
+    Plaxis.Initialize(Materials=True)
+    from Plaxis.PlaxisInput import SetSoilProperties
+    SetSoilProperties([" Fill ", " CDG( |$)"],
+                      [Plaxis.PlxSoilMaterial.Kx, Plaxis.PlxSoilMaterial.Ky],
+                      [5.5e-6, 1e-5])
 
 if  __name__ == "__main__":
     GetPlaxisAnchorForces()
+    #SetSoilPermeability()
     exit()
     while 1:
         res = input("Press any ENTRE to Start Plaxis Anchor Force Output...")

@@ -8,8 +8,8 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}\\PlaxisPlateHelper.py",
-            //"program": "${workspaceFolder}\\startup.py",
+            //"program": "${workspaceFolder}\\PlaxisPlateHelper.py",
+            "program": "${workspaceFolder}\\startup.py",
             "console": "integratedTerminal"
         }
     ]

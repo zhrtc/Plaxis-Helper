@@ -16,6 +16,9 @@ class PlxElement:
         self.Name = object.Name.value
         self.PlxObject = object
 
+    def SetProperty(self, name: str, value: int | float | str) -> None:
+        self.PlxObject.setproperties(name, value)
+
 class PlxMaterial(PlxElement):
     MaterialName:str = None
     TypeName:MaterialTypeName = None
@@ -25,6 +28,9 @@ class PlxMaterial(PlxElement):
         self.MaterialName = object.MaterialName.value
 
 class PlxSoilMaterial(PlxMaterial):
+    Kx = "perm_primary_horizontal_axis"
+    Ky = "perm_vertical_axis"
+    
     def __init__(self, object) -> None:
         super().__init__(object)
         self.TypeName = MaterialTypeName.Soil
