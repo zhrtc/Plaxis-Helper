@@ -1,4 +1,5 @@
 from plxscripting.easy import *
+import plxscripting.requests.exceptions6
 from .ServerConfig import ServerConfig
 from .CommonFuncs import *
 from .PlxElements import *
@@ -8,11 +9,21 @@ import logging
 FORMAT = '%(asctime)s %(message)s'
 logging.basicConfig(format=FORMAT)
 
+def SwitchToStagedConstruction(maxTryTimes: int = 3):
+    succeed = False
+    for i in range(maxTryTimes):
+        try:
+            GV.PlxInput.gotostages()
+        except plxscripting.requests.exceptions.Timeout as ex:
+            if i == maxTryTimes - 1:
+                raise ex
+            
+
 def Initialize(serverConfig:ServerConfig = ServerConfig(), All:bool = False, Anchors:bool = False,
                Plates:bool = False, Materials:bool = False, Phases:bool = False, GotoStage:bool = False,
                ConnectOutput:bool = False):
     GV.Reset()
-    logger = logging.getLogger("InitPlaxis")
+    logger = logging.getLogger("Plaxis")
     logger.setLevel(logging.INFO)
     logger.info("Initialize Plaxis Module")
 
@@ -38,6 +49,7 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), All:bool = False, Anc
             exit()
 
     PlxInput = GV.PlxInput
+    GV.PlxInput.SwitchToStagedConstruction = SwitchToStagedConstruction
 
     if All or GotoStage:
         PlxInput.gotostages()
@@ -73,23 +85,52 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), All:bool = False, Anc
     if All or Anchors:
         logger.info("Enumerate FixedEndAnchors...")
         for i, item in enumerate(PlxInput.FixedEndAnchors):
-            GV.PlxFixedAnchors[i+1] = PlxAnchor(item)
-            logger.info(f"    {GV.PlxFixedAnchors[i+1].Name}")
+            anchor = PlxAnchor(item)
+            logger.info(f"    {anchor.Name}")
             tmpMaterialName = item.Material[GV.PlxPhases["InitialPhase"].PlxObject].Name.value
-            GV.PlxFixedAnchors[i+1].Material = GV.AnchorMatsByName[tmpMaterialName]
-            GV.PlxFixedAnchors[i+1].MaterialName = GV.PlxFixedAnchors[i+1].Material.MaterialName
-            GV.PlxFixedAnchors[i+1].Spacing = GV.PlxFixedAnchors[i+1].Material.Spacing
-            GV.PlxFixedAnchors[i+1].Length = item.EquivalentLength[GV.PlxPhases["InitialPhase"].PlxObject].value
+            anchor.Material = GV.AnchorMatsByName[tmpMaterialName]
+            anchor.MaterialName = anchor.Material.MaterialName
+            anchor.Spacing = anchor.Material.Spacing
+            anchor.Length = item.EquivalentLength[GV.PlxPhases["InitialPhase"].PlxObject].value
+            anchor.UpdatePrestress()
+            GV.PlxFixedAnchors[i+1] = anchor
 
         logger.info("Enumerate NodeToNodeAnchors...")
         for i, item in enumerate(PlxInput.NodeToNodeAnchors):
-            GV.PlxNtNAnchors[i+1] = PlxAnchor(item)
-            logger.info(f"    {GV.PlxNtNAnchors[i+1].Name}")
+            anchor =  PlxAnchor(item)
+            logger.info(f"    {anchor.Name}")
             tmpMaterialName = item.Material[GV.PlxPhases["InitialPhase"].PlxObject].Name.value
-            GV.PlxNtNAnchors[i+1].Material = GV.AnchorMatsByName[tmpMaterialName]
-            GV.PlxNtNAnchors[i+1].MaterialName = GV.PlxNtNAnchors[i+1].Material.MaterialName
-            GV.PlxNtNAnchors[i+1].Spacing = GV.PlxNtNAnchors[i+1].Material.Spacing
+            anchor.Material = GV.AnchorMatsByName[tmpMaterialName]
+            anchor.MaterialName = anchor.Material.MaterialName
+            anchor.Spacing = anchor.Material.Spacing
+            anchor.UpdatePrestress()
+            GV.PlxNtNAnchors[i+1] = anchor
 
+            #GV.PlxNtNAnchors[i+1].X1 = item.Parent.First.x.value
+            #GV.PlxNtNAnchors[i+1].Y1 = item.Parent.First.y.value
+            ##GV.PlxNtNAnchors[i+1].X2 = item.Parent.Second.x.value
+            #GV.PlxNtNAnchors[i+1].Y2 = item.Parent.Second.y.value
+        
+        logger.info("Go to Structures to obtain coordinates...")
+        PlxInput.gotostructures()
+        for item in GV.PlxFixedAnchors.values():
+            parentName = item.Name[:item.Name.rfind("_")]
+            for anchor in PlxInput.FixedEndAnchors:
+                if anchor.Name.value == parentName:
+                    item.X1 = anchor.Parent.x.value
+                    item.Y1 = anchor.Parent.y.value
+        for item in GV.PlxNtNAnchors.values():
+            parentName = item.Name[:item.Name.rfind("_")]
+            for anchor in PlxInput.NodeToNodeAnchors:
+                if anchor.Name.value == parentName:
+                    item.X1 = anchor.Parent.First.x.value
+                    item.Y1 = anchor.Parent.First.y.value
+                    item.X2 = anchor.Parent.Second.x.value
+                    item.Y2 = anchor.Parent.Second.y.value
+        
+        logger.info("Switch back to Staged Construction...")
+        PlxInput.SwitchToStagedConstruction()
+        
     if All or Plates:
         logger.info("Enumerate Plates...")
         for i, item in enumerate(PlxInput.Plates):
