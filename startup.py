@@ -21,6 +21,12 @@ def GetPlaxisAnchorForces():
             activeCell = targetSheet.book.app.selection
             activeCell.value = anchorOutputList
 
+def GetPlaxisAnchorPreloadDeformation():
+    Plaxis.Initialize(All=True)
+    from Plaxis.PlaxisOutput import UpdatePrestressDeformation
+    UpdatePrestressDeformation()
+
+
 def SetSoilPermeability():
     Plaxis.Initialize(Materials=True)
     from Plaxis.PlaxisInput import SetSoilProperties
@@ -29,7 +35,8 @@ def SetSoilPermeability():
                       [5.5e-6, 1e-5])
 
 if  __name__ == "__main__":
-    GetPlaxisAnchorForces()
+    GetPlaxisAnchorPreloadDeformation()
+    #GetPlaxisAnchorForces()
     #SetSoilPermeability()
     exit()
     while 1:

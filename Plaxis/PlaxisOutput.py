@@ -2,11 +2,14 @@ from .PlxElements import *
 from typing import List, Any
 from plxscripting.plx_scripting_exceptions import PlxScriptingError
 from .PhasesSelectDialog import PhasesSelectDialog
+import logging
+
+logger = logging.getLogger("Plaxis")
 
 def GenerateAnchorOutput() -> List[Any]:
     print("\nStart Output\nExtracting Resuts...")
     PlxOutput = GV.PlxOutput
-    timeout = 5
+    timeout = 1
 
     phaseNameList = []
     startPhase = 0
@@ -108,3 +111,95 @@ def GenerateAnchorOutput() -> List[Any]:
             resultList.append(anchor.ToList())
     print(resultStr)
     return resultList
+
+def UpdatePrestressDeformation():
+    logger.info("Obtain Preload Information")
+    PlxOutput = GV.PlxOutput
+    for item in GV.PlxFixedAnchors.values():
+        logger.info(f"Processing {item.Name}")
+        if item.PrestressPhaseName != None:
+            Xs = PlxOutput.getresults(item.PlxObject, item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.FixedEndAnchor.X, 'node')
+            Ys = PlxOutput.getresults(item.PlxObject, item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.FixedEndAnchor.Y, 'node')
+            PUxs = PlxOutput.getresults(item.PlxObject, item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.FixedEndAnchor.PUx, 'node')
+            LocalNumbers = PlxOutput.getresults(item.PlxObject, item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.FixedEndAnchor.LocalNumber, 'node')
+
+            tmp = zip(Xs, Ys, PUxs, LocalNumbers)
+            for x, y, pux, ln in tmp:
+                if  ln == 1:
+                    item.PrestressDeformX1 = pux
+            
+    for item in GV.PlxNtNAnchors.values():
+        logger.info(f"Processing {item.Name}")
+        if item.PrestressPhaseName != None:
+            Xs = PlxOutput.getresults(item.PlxObject, item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.NodeToNodeAnchor.X, 'node')
+            Ys = PlxOutput.getresults(item.PlxObject, item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.NodeToNodeAnchor.Y, 'node')
+            PUxs = PlxOutput.getresults(item.PlxObject, item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.NodeToNodeAnchor.PUx, 'node')
+            LocalNumbers = PlxOutput.getresults(item.PlxObject, item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.NodeToNodeAnchor.LocalNumber, 'node')
+
+            tmp = zip(Xs, Ys, PUxs, LocalNumbers)
+            for x, y, pux, ln in tmp:
+                if  ln == 1:
+                    item.PrestressDeformX1 = pux
+                elif ln == 2:
+                    item.PrestressDeformX2 = pux
+
+    tmpAnchors = list(GV.PlxFixedAnchors.values()) + list(GV.PlxNtNAnchors.values())
+    resultStr = "Anchor Name \tLevel \tPreload Stage \tPreload Value \tX1 \tY1 \tDeformation \tX2 \tY2 \tDeformation\r\n"
+    for anchor in sorted(tmpAnchors, key=PlxAnchor.LevelCompare):
+        if anchor.PrestressDeformX1 != None:
+            resultStr += f"{anchor.Name}\t{anchor.Y1}\t{anchor.PrestressPhaseName}\t{anchor.PrestressForce:8.2f}\t{anchor.X1:8.3f}\t{anchor.Y1:8.2f}\t{anchor.PrestressDeformX1*1000:8.1f}"
+            if anchor.PrestressDeformX2 != None:
+                resultStr += f"\t{anchor.X2:8.3f}\t{anchor.Y2:8.2f}\t{anchor.PrestressDeformX2*1000:8.1f}"
+            resultStr += "\r\n"
+    print(resultStr)
+
+# def UpdatePrestressDeformation():
+#     PlxOutput = GV.PlxOutput
+#     PhasedDeformation = {}
+#     for item in GV.PlxFixedAnchors.values():
+#         if item.PrestressPhaseName != None:
+#             deformation = None
+#             if item.PrestressPhaseName in PhasedDeformation:
+#                 deformation = PhasedDeformation[item.PrestressPhaseName]
+#             else:    
+#                 x = PlxOutput.getresults(item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.Soil.X, 'node')
+#                 y = PlxOutput.getresults(item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.Soil.Y, 'node')
+#                 PUx = PlxOutput.getresults(item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.Soil.PUx, 'node')
+#                 deformation = zip(x, y, PUx)
+#                 PhasedDeformation[item.PrestressPhaseName] = deformation
+#             if deformation == None:
+#                 continue
+            
+#             for x, y, PUx in deformation:
+#                 if abs(x - item.X1) < 1e-4 and abs(y - item.Y1) < 1e-4:
+#                     item.PrestressDeformX1 = PUx
+
+#     for item in GV.PlxNtNAnchors.values():
+#         if item.PrestressPhaseName != None:
+#             deformation = None
+#             if item.PrestressPhaseName in PhasedDeformation:
+#                 deformation = PhasedDeformation[item.PrestressPhaseName]
+#             else:    
+#                 x = PlxOutput.getresults(item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.Soil.X, 'node')
+#                 y = PlxOutput.getresults(item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.Soil.Y, 'node')
+#                 PUx = PlxOutput.getresults(item.PrestressPhase.PlxObject, PlxOutput.ResultTypes.Soil.PUx, 'node')
+#                 deformation = zip(x, y, PUx)
+#                 PhasedDeformation[item.PrestressPhaseName] = deformation
+#             if deformation == None:
+#                 continue
+            
+#             for x, y, PUx in deformation:
+#                 if abs(x - item.X1) < 1e-4 and abs(y - item.Y1) < 1e-4:
+#                     item.PrestressDeformX1 = PUx
+#                 if abs(x - item.X2) < 1e-4 and abs(y - item.Y2) < 1e-4:
+#                     item.PrestressDeformX2 = PUx
+
+#     tmpAnchors = list(GV.PlxFixedAnchors.values()) + list(GV.PlxNtNAnchors.values())
+#     resultStr = "Anchor Name \tLevel \tPreload Stage \tPreload Value \tX1 \tY1 \tDeformation \tX2 \tY2 \tDeformation\r\n"
+#     for anchor in sorted(tmpAnchors, key=PlxAnchor.LevelCompare):
+#         if anchor.PrestressPhaseName != None:
+#             resultStr += f"{anchor.Name}\t{anchor.Y1}\t{anchor.PrestressPhaseName}\t{anchor.PrestressForce:8.2f}\t{anchor.X1:8.3f}\t{anchor.Y1:8.2f}\t{anchor.PrestressDeformX1:8.2f}"
+#             if anchor.PrestressDeformX2 != None:
+#                 resultStr += f"\t{anchor.X2:8.3f}\t{anchor.Y2:8.2f}\t{anchor.PrestressDeformX2:8.2f}"
+#             resultStr += "\r\n"
+#     print(resultStr)

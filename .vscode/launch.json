@@ -10,6 +10,7 @@
             "request": "launch",
             //"program": "${workspaceFolder}\\PlaxisPlateHelper.py",
             "program": "${workspaceFolder}\\startup.py",
+            //"program": "${file}",
             "console": "integratedTerminal"
         }
     ]

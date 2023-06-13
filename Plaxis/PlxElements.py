@@ -89,7 +89,10 @@ class PlxAnchor(PlxElement):
     X2:float = None
     Y2:float = None
     PrestressForce:float = None
+    PrestressPhase:PlxPhase = None
     PrestressPhaseName:str = None
+    PrestressDeformX1:float = None
+    PrestressDeformX2:float = None
     Forces:Dict[str, float] = None
     MaxTension:float = None
     MaxTensionPhaseName:str = None
@@ -104,16 +107,15 @@ class PlxAnchor(PlxElement):
     def __init__(self, object) -> None:
         super().__init__(object)
         self.Forces:Dict[str, float] = {}
-        self.UpdatePrestress()
 
     def UpdatePrestress(self) -> None:
         for phase in GV.PlxPhasesList:
             isPrestressActivated = self.PlxObject.AdjustPrestress[phase.PlxObject].value
             if isPrestressActivated == True:
                 self.PrestressForce = self.PlxObject.PrestressForce[phase.PlxObject].value
-                self.PrestressPhaseName = phase.Name
+                self.PrestressPhase = phase
+                self.PrestressPhaseName = f"{phase.PhaseID} [{phase.Name}]"
                 break
-
 
     def UpdateMaxForce(self, phaseName:str, *args) -> None:
         for item in args:
