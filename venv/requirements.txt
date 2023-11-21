@@ -1,7 +1,7 @@
-pycparser==2.21
-pyperclip==1.8.2
-PySide6==6.2.2.1
-pytimedinput==2.0.1
-pywin32==303
-shiboken6==6.2.2.1
-xlwings==0.25.3
+pycparser
+pyperclip
+PySide6
+pytimedinput
+pywin32
+#shiboken6==6.2.2.1
+xlwings

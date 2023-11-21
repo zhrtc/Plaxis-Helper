@@ -1,5 +1,5 @@
 from plxscripting.easy import *
-import plxscripting.requests.exceptions6
+import plxscripting.requests.exceptions
 from .ServerConfig import ServerConfig
 from .CommonFuncs import *
 from .PlxElements import *
@@ -20,6 +20,7 @@ def SwitchToStagedConstruction(maxTryTimes: int = 3):
             
 
 def Initialize(serverConfig:ServerConfig = ServerConfig(), All:bool = False, Anchors:bool = False,
+               FixedAnchors:bool = False,  NtNAnchors:bool = False,
                Plates:bool = False, Materials:bool = False, Phases:bool = False, GotoStage:bool = False,
                ConnectOutput:bool = False):
     GV.Reset()
@@ -49,14 +50,18 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), All:bool = False, Anc
             exit()
 
     PlxInput = GV.PlxInput
+    GV.ProjectName = PlxInput.Project.Filename.value
+    if (tmp_pos := GV.ProjectName.rfind("\\")) > 0:
+        GV.ProjectName = GV.ProjectName[tmp_pos + 1:]
+                           
     GV.PlxInput.SwitchToStagedConstruction = SwitchToStagedConstruction
 
     if All or GotoStage:
-        PlxInput.gotostages()
+        PlxInput.SwitchToStagedConstruction()
 
     if All or Phases:
         logger.info("Enumerate Phases...")
-        for phase in PlxInput.Phases:
+        for phase in PlxInput.Phases[:]:
             obj = PlxPhase(phase)
             logger.info(f"    {obj.PhaseID} [{obj.Name}]")
             GV.PlxPhases[obj.Name] = obj
@@ -66,7 +71,7 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), All:bool = False, Anc
                 phaseObj.Previous.Children.append(phaseObj)
         GV.PlxPhasesList = PreOrderDeepList(GV.PlxPhases['InitialPhase'])
 
-    if All or Materials:
+    if All or Materials or Anchors or FixedAnchors or NtNAnchors:
         logger.info("Enumerate Materials...")
         for mat in PlxInput.Materials:
             matType = mat.TypeName.value
@@ -82,7 +87,7 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), All:bool = False, Anc
             elif matType == "EmbeddedBeam2DMat":
                 GV.EmbeddedBeamMats[mat.MaterialNumber.value] = PlxEmbeddedBeamMaterial(mat)
 
-    if All or Anchors:
+    if All or Anchors or FixedAnchors:
         logger.info("Enumerate FixedEndAnchors...")
         for i, item in enumerate(PlxInput.FixedEndAnchors):
             anchor = PlxAnchor(item)
@@ -95,6 +100,7 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), All:bool = False, Anc
             anchor.UpdatePrestress()
             GV.PlxFixedAnchors[i+1] = anchor
 
+    if All or Anchors or NtNAnchors:
         logger.info("Enumerate NodeToNodeAnchors...")
         for i, item in enumerate(PlxInput.NodeToNodeAnchors):
             anchor =  PlxAnchor(item)
@@ -111,6 +117,8 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), All:bool = False, Anc
             ##GV.PlxNtNAnchors[i+1].X2 = item.Parent.Second.x.value
             #GV.PlxNtNAnchors[i+1].Y2 = item.Parent.Second.y.value
         
+
+    if All or Anchors or FixedAnchors:
         logger.info("Go to Structures to obtain coordinates...")
         PlxInput.gotostructures()
         for item in GV.PlxFixedAnchors.values():
@@ -119,6 +127,10 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), All:bool = False, Anc
                 if anchor.Name.value == parentName:
                     item.X1 = anchor.Parent.x.value
                     item.Y1 = anchor.Parent.y.value
+    if All or Anchors or NtNAnchors:
+        if not (All or anchor):
+            logger.info("Go to Structures to obtain coordinates...")
+        PlxInput.gotostructures()
         for item in GV.PlxNtNAnchors.values():
             parentName = item.Name[:item.Name.rfind("_")]
             for anchor in PlxInput.NodeToNodeAnchors:
@@ -139,3 +151,6 @@ def Initialize(serverConfig:ServerConfig = ServerConfig(), All:bool = False, Anc
             GV.PlxPlates[i+1].MaterialName = item.Material[GV.PlxPhases["InitialPhase"].PlxObject].Name.value
 
     logger.info("Initialization Finished.")
+
+def GetProjectName() -> str:
+    return GV.ProjectName

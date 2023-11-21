@@ -20,7 +20,8 @@ class PhasesSelectDialog(QDialog):
     timer:QTimer = None
     Timeout:int = 0
 
-    def __init__(self, phasesList:List[str], selectedItemIndices:List[int], title:str = "Please Select {} Phases", timeout:int = 5) -> None:
+    def __init__(self, phasesList:List[str], selectedItemIndices:List[int], title:str = "Please Select {} Phases",
+                 timeout:int = 5, unlimited_items = False) -> None:
         super().__init__()
 
         if not self.objectName():
@@ -41,7 +42,11 @@ class PhasesSelectDialog(QDialog):
         #Process PhasesList
         self.PhasesList.addItems(phasesList)
         self.SelectedItems = selectedItemIndices
-        self.RequiredSelectedItemNos = len(selectedItemIndices)
+        self.Unlimited_items = unlimited_items
+        if self.Unlimited_items:
+            self.RequiredSelectedItemNos = 9999
+        else:
+            self.RequiredSelectedItemNos = len(selectedItemIndices)
         for itemIndex in selectedItemIndices:
             self.PhasesList.item(itemIndex).setSelected(True)
         self.PhasesList.itemSelectionChanged.connect(self.PhasesList_Change)
@@ -67,8 +72,9 @@ class PhasesSelectDialog(QDialog):
         if (not self.timer is None) and self.timer.isActive():
             self.timer.stop()
         selectedItems = self.PhasesList.selectedItems()
-        if len(selectedItems) > self.RequiredSelectedItemNos:
-            selectedItems[0].setSelected(False)
+        if not self.Unlimited_items:
+            if len(selectedItems) > self.RequiredSelectedItemNos:
+                selectedItems[0].setSelected(False)
 
     @Slot()
     def Timer_OnTime(self):
@@ -85,13 +91,16 @@ class PhasesSelectDialog(QDialog):
 
     @Slot()
     def OK(self):
-        if len(self.PhasesList.selectedItems()) == self.RequiredSelectedItemNos:
+        if self.Unlimited_items:
             self.accept()
         else:
-            msgBox = QMessageBox()
-            msgBox.setWindowTitle("Warning!")
-            msgBox.setText("Please select {} phases!".format(self.RequiredSelectedItemNos))
-            msgBox.exec()
+            if len(self.PhasesList.selectedItems()) == self.RequiredSelectedItemNos:
+                self.accept()
+            else:
+                msgBox = QMessageBox()
+                msgBox.setWindowTitle("Warning!")
+                msgBox.setText("Please select {} phases!".format(self.RequiredSelectedItemNos))
+                msgBox.exec()
 
     @Slot()
     def Cancel(self):

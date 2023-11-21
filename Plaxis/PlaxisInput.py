@@ -39,3 +39,18 @@ def SetSoilProperties(namePattern: str | List, propertyName: str | List, value: 
         if isMatFound == False:
             print(
                 f"Soil Material {soilMat.MaterialName} Dose NOT Match ANY Patterns.")
+
+
+def ModifyGWL(original_level: float | list[float], new_level: float):
+    if not isinstance(original_level, (list, tuple)):
+        original_level=[original_level]
+    GV.PlxInput.gotoflow
+    for uwl in GV.PlxInput.UserWaterLevels:
+        print(f"Processing UserWaterLevel: [{uwl.Name}]")
+        base_y = uwl.y
+        for p in uwl.Points:
+            print(f"Original Level is {base_y + p.y}mPD.")
+            for level in original_level:
+                if abs(base_y + p.y - level) < 1e-4:
+                    print(f"Change Original Level from {base_y + p.y}mPD to {new_level}mPD.")
+                    p.y = new_level - base_y

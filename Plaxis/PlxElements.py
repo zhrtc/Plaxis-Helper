@@ -145,7 +145,7 @@ class PlxAnchor(PlxElement):
             level = f"{self.Y1:+7.2f}"
         else:
             level = f"{self.Y1:+7.2f}~{self.Y2:+7.2f}"
-        preloadStr = f", Preloaded at Phase: {GV.PlxPhases[self.PrestressPhaseName].PhaseID} [{self.PrestressPhaseName}])" if self.PrestressForce != None else ""
+        preloadStr = f", Preloaded at Phase: {self.PrestressPhaseName}" if self.PrestressForce != None else ""
         return (f"{self.Name:24}\t{level}\t{self.Length:6.2f}\t{self.Spacing:5.2f}\t{abs(self.MaxCompression):8.1f}\t"
                 f"{abs(self.PrestressForce) if self.PrestressForce != None else 0:8.1f}\t{self.MaterialName}\t"
                 f"Max Force accured at Phase: {GV.PlxPhases[self.MaxCompressionPhaseName].PhaseID} [{self.MaxCompressionPhaseName}]"
@@ -160,7 +160,7 @@ class PlxAnchor(PlxElement):
                 round(abs(self.PrestressForce), 3) if self.PrestressForce != None else 0,
                 self.MaterialName,
                 f"{GV.PlxPhases[self.MaxCompressionPhaseName].PhaseID} [{self.MaxCompressionPhaseName}]",
-                f"{GV.PlxPhases[self.PrestressPhaseName].PhaseID} [{self.PrestressPhaseName}]" if self.PrestressForce != None else ""]
+                f"{self.PrestressPhaseName}" if self.PrestressForce != None else ""]
 
     @staticmethod
     def LevelCompare(x):
@@ -195,6 +195,8 @@ class GV():
     PlxInput = None
     PlxOutput = None
 
+    ProjectName: str = ""
+
     PlxPhases:Dict[str, PlxPhase] = {}
     PlxPhasesList:List[PlxPhase] = []
 
@@ -215,6 +217,8 @@ class GV():
         cls.SeverOutput = None
         cls.PlxInput = None
         cls.PlxOutput = None
+
+        cls.ProjectName = ""
 
         cls.PlxPhases.clear()
         cls.PlxPhasesList.clear()
